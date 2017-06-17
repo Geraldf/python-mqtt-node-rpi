@@ -7,6 +7,7 @@ import sys
 
 # Settings go here FIXME: Move to ini-file
 # ----------------------------------------
+NODE_NAME = "hall"
 SERVER = "192.168.0.80"
 MIN_RETRY_TIME = 2
 MAX_RETRY_TIME = 20
@@ -51,14 +52,30 @@ def on_msg(client, userdata, msg):
     target = msg.topic.split('/')[-1]
     state = msg.payload
 
+    res = 1
     if action == "set":
         try:
-            set_light(target, state)
+            res = set_light(target, state)
             log("target {} changed to {}".format(target, state))
         except:
+            res = 2
             log("Failed to set light {} to state {}.".format(target, state))
     else:
         log("Unknown command received...")
+
+    if res == 0:
+        ans = 'ok,{}'.format(state)
+    elif res == 1:
+        ans = 'error,unknown command'
+    elif res == -1:
+        ans = 'error,unknown target'
+    elif res == -2:
+        ans = 'error,unknown state'
+    client.publish(
+            'cmdres/{node}/{target}'.format(node=NODE_NAME, target=target),
+            payload=ans,
+            qos=1,
+            retain=False)
 
 
 '''

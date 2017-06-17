@@ -9,7 +9,12 @@ STATES = dict(
 
 
 def set_light(light, state):
+    if not light in LIGHTS:
+        return -1
+    if not state in STATES:
+        return -2
     gpio.write(LIGHTS[light], STATES[state])
+    return 0
 
 
 gpio = pigpio.pi()
