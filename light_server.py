@@ -48,31 +48,26 @@ def get_mac():
 callback for paho on mqtt message
 '''
 def on_msg(client, userdata, msg):
-    action = msg.topic.split('/')[-2]
-    target = msg.topic.split('/')[-1]
+    target = msg.topic.split('/')[-2]
     state = msg.payload
 
-    res = 1
-    if action == "set":
-        try:
-            res = set_light(target, state)
-            log("target {} changed to {}".format(target, state))
-        except:
-            res = 2
-            log("Failed to set light {} to state {}.".format(target, state))
-    else:
-        log("Unknown command received...")
+    try:
+        res = set_light(target, state)
+        log("target {} changed to {}".format(target, state))
+    except:
+        res = 1
+        log("Failed to set light {} to state {}.".format(target, state))
 
     if res == 0:
-        ans = 'ok,{}'.format(state)
-    elif res == 1:
-        ans = 'error,unknown command'
+        ans = '{"status":"ok","value":"%s"}' % state
     elif res == -1:
-        ans = 'error,unknown target'
+        ans = '{"status":"error","value":"unknown target"}'
     elif res == -2:
-        ans = 'error,unknown state'
+        ans = '{"status":"error","value":"unknown state"}'
+    elif res == 1:
+        ans = '{"status":"error","value":"failed to set light (%s) to state %s"}' % (target, state)
     client.publish(
-            'cmdres/{node}/{target}'.format(node=NODE_NAME, target=target),
+            'home/{node}/{target}/light'.format(node=NODE_NAME, target=target),
             payload=ans,
             qos=1,
             retain=False)
@@ -85,9 +80,9 @@ def on_connect(client, userdata, rc):
     global connected
     if rc == 0:
         log("Connected")
-        client.subscribe("commands/hall/#", qos=1)
+        client.subscribe("commands/home/hall/+/light", qos=1)
         return
-    log("Connecttion failed with status " + str(rc))
+    log("Connection failed with status " + str(rc))
     connected = False
     sleep(retry_time)
     retry_time = min(MAX_RETRY_TIME, retry_time*2)
@@ -124,7 +119,7 @@ def try_connect(mqttc):
 
 
 
-
+log("Client ID is %s" % get_mac())
 mqttc = mqtt.Client(client_id=get_mac(), clean_session=False)
 
 mqttc.on_message = on_msg
