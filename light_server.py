@@ -53,19 +53,30 @@ def on_msg(client, userdata, msg):
 
     try:
         res = set_light(target, state)
-        log("target {} changed to {}".format(target, state))
     except:
         res = 1
         log("Failed to set light {} to state {}.".format(target, state))
 
     if res == 0:
+        log("target {} changed to {}".format(target, state))
+    else:
+        if res == -1:
+            error = "unknown target"
+        elif res == -2:
+            error = "unknown state"
+        elif res == 1:
+            error = "failed to set light {} to state {}".format(target, state)
+        else:
+            error = "Snap. Unknown error."
+
+        log(error)
+
+
+    if res == 0:
         ans = '{"status":"ok","value":"%s"}' % state
-    elif res == -1:
-        ans = '{"status":"error","value":"unknown target"}'
-    elif res == -2:
-        ans = '{"status":"error","value":"unknown state"}'
-    elif res == 1:
-        ans = '{"status":"error","value":"failed to set light (%s) to state %s"}' % (target, state)
+    else:
+        ans = '{"status":"error","value":"%s"}' % error 
+
     client.publish(
             'home/{node}/{target}/light'.format(node=NODE_NAME, target=target),
             payload=ans,
@@ -76,11 +87,12 @@ def on_msg(client, userdata, msg):
 '''
 callback for paho on mqtt connected
 '''
-def on_connect(client, userdata, rc):
+def on_connect(client, userdata, flags, rc):
     global connected
     if rc == 0:
         log("Connected")
-        client.subscribe("commands/home/hall/+/light", qos=1)
+        topic = "commands/home/{}/+/light".format(NODE_NAME)
+        client.subscribe(topic, qos=1)
         return
     log("Connection failed with status " + str(rc))
     connected = False
