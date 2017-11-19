@@ -21,14 +21,17 @@ def on_msg(client, data, msg):
         ans = dict(status="ok", value=state)
     else:
         d_err = []
+        for key, value in status.iteritems():
+            if isinstance(value, str):
+                d_err.append("Snap. Exception from '{}': {}".format(key, value))
+
         if status["target"] == False:
             d_err.append("Target is invalid")
         if status["state"] == False:
             d_err.append("Value is invalid")
         if status["action"] == False:
             d_err.append("Snap. Failed to set value for target")
-        if isinstance(status["action"], str):
-            d_err.append("Snap. Exception: " + status["action"])
+
         ans = dict(
                 status="error",
                 error=d_err,

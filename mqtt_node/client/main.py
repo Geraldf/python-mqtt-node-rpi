@@ -3,7 +3,7 @@ from .. import conf, log, ios, ENV
 from mqtt import Mqtt
 
 if ENV != "TEST":
-    from ..io import set_io as action
+    from ..io.control import set_io as action
 else:
     # Dummy action so we can test on workstation without IOs
     def action(target, value):
@@ -19,14 +19,19 @@ def proxy_action(target, state):
 
     if ans["target"]:
         try:
-            value = conf.get(target, state)
+            pin = int(conf.get(target, "pin"))
+        except Exception as e:
+            ans["target"] = str(e)
+
+        try:
+            value = int(conf.get(target, state))
             ans["state"]=True
         except NoOptionError:
             ans["state"]=False
 
         if ans["state"]:
             try:
-                if action(target, value):
+                if action(pin, value):
                     ans["action"] = True
                 else:
                     ans["action"] = False
