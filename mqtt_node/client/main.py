@@ -48,6 +48,10 @@ def run_client():
     c.update(dict(conf.items("UNIT")))
     mqtt = Mqtt(c, proxy_action)
 
+    mqtt.info.update(dict(
+        description=conf.get("UNIT", "description"),
+        targets=str(ios)))
+
     log("Using client ID {}".format(mqtt.get_id()))
 
     mqtt.connect_and_block()
