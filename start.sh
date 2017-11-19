@@ -1,12 +1,9 @@
 #!/bin/bash
 
-LOG=/home/pi/light_server.log
-
-DIR=$(dirname $0)
-
 echo "
---- STARTING SERVER ---" >> $LOG
-date >> $LOG
-ps -aux | grep [p]igpiod >> $LOG
+--- STARTING MQTT NODE ---"
+if ! ps -aux | grep [p]igpiod; then
+    echo "WARNING, Pigpio daemon is not running!"
+fi
 
-python $DIR/light_server.py $LOG
+python -m mqtt_node
