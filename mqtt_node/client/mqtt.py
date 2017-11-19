@@ -4,7 +4,7 @@ import socket
 from time import sleep, time
 import sys
 from .. import log
-from utils import get_mac
+from utils import get_mac, get_ip
 import json
 
 
@@ -48,6 +48,21 @@ def on_msg(client, data, msg):
             qos=1,
             retain=False)
 
+    set_info(client, data.node_name, data.info)
+
+
+'''
+set retained statuses for unit
+'''
+def set_info(client, node_name, info):
+    info['last_update'] = str(time())
+    for key, value in info.iteritems():
+        client.publish(
+                'home/{node}/info/{key}'.format(node=node_name, key=key),
+                payload=value,
+                qos=1,
+                retain=True)
+
 
 '''
 callback for paho on mqtt connected
@@ -57,6 +72,8 @@ def on_connect(client, data, flags, rc):
         log("Connected")
         topic = "commands/home/{}/+/output".format(data.node_name)
         client.subscribe(topic, qos=1)
+
+        set_info(client, data.node_name, data.info)
         return
     log("Connection failed with status " + str(rc))
     data.connected = False
@@ -85,9 +102,19 @@ class Mqtt:
         self.server = config['server']
         self.node_name = config['node_name']
 
+        self.info = dict(
+                status = "online",
+                id = self.id,
+                ip = get_ip())
+
         self.callback = action_callback
 
         self.mqttc = mqtt.Client(client_id=self.id, clean_session=True, userdata=self)
+        self.mqttc.will_set(
+                topic="home/{}/info/status".format(self.node_name),
+                payload="lost",
+                qos=1,
+                retain=True)
 
         self.mqttc.on_message = on_msg
         self.mqttc.on_connect = on_connect
@@ -108,6 +135,10 @@ class Mqtt:
         except KeyboardInterrupt:
             pass
         finally:
+            self.info["status"] = "disconnected"
+            set_info(self.mqttc, self.node_name, self.info)
+            sleep(0.5)
+            self.mqttc.disconnect()
             self.mqttc.loop_stop()
 
 
