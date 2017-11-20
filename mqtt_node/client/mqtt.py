@@ -79,7 +79,7 @@ def on_connect(client, data, flags, rc):
     data.connected = False
     sleep(data.retry_time)
     data.retry_time = min(data.max_retry_time, data.retry_time*2)
-    data.try_connect(data.mqttc)
+    data.try_connect()
 
 
 '''
@@ -89,15 +89,15 @@ def on_disconnect(client, data, rc):
     log("Disconnected with reason {}...".format(rc))
     data.connected = False
     if rc != 0:
-        data.try_connect(data.mqttc)
+        data.try_connect()
 
 
 class Mqtt:
     def __init__(self, config, action_callback):
         self.id = get_mac()
         self.connected = False
-        self.min_retry_time = config["min_retry_time"]
-        self.max_retry_time = config["max_retry_time"]
+        self.min_retry_time = float(config["min_retry_time"])
+        self.max_retry_time = float(config["max_retry_time"])
         self.retry_time = self.min_retry_time
         self.server = config['server']
         self.node_name = config['node_name']
@@ -153,12 +153,11 @@ class Mqtt:
     try to connect to mqtt server
     '''
     def try_connect(self):
-        while(not self.connected):
+        while not self.connected:
             try:
                 self.mqttc.connect(self.server, keepalive=25)
                 self.connected = True
             except socket.error:
                 log("Failed to connect... Retrying in {} seconds".format(self.retry_time))
                 sleep(self.retry_time)
-                self.retry_time = min(self.max_retry_time, retry_time*2)
-
+                self.retry_time = min(self.max_retry_time, self.retry_time*2)

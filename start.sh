@@ -6,4 +6,5 @@ if ! ps -aux | grep [p]igpiod; then
     echo "WARNING, Pigpio daemon is not running!"
 fi
 
-python -m mqtt_node
+cd $(dirname $0)
+python -m mqtt_node 2> err.txt
