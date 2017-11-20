@@ -107,6 +107,8 @@ class Mqtt:
                 id = self.id,
                 ip = get_ip())
 
+        self.ip_last_update = time()
+
         self.callback = action_callback
 
         self.mqttc = mqtt.Client(client_id=self.id, clean_session=True, userdata=self)
@@ -132,6 +134,7 @@ class Mqtt:
         try:
             while True:
                 sleep(1)
+                self.sanity_check()
         except KeyboardInterrupt:
             pass
         finally:
@@ -161,3 +164,17 @@ class Mqtt:
                 log("Failed to connect... Retrying in {} seconds".format(self.retry_time))
                 sleep(self.retry_time)
                 self.retry_time = min(self.max_retry_time, self.retry_time*2)
+
+
+    '''
+    make sure that everything is in good situation
+    '''
+    def sanity_check(self):
+        # Make sure that the IP is up-to-date
+        # Check every 10 seconds if it has changed, in that case resend status info
+        if time() - self.ip_last_update > 10:
+            new_ip = get_ip()
+            if self.info["ip"] != new_ip and new_ip != "?":
+                self.info["ip"] = new_ip
+                set_info(self.mqttc, self.node_name, self.info)
+            self.ip_last_update = time()
