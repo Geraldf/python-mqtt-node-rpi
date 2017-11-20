@@ -42,3 +42,52 @@ With the standard settings in config.ini this could be as follows using mosquitt
 ```bash
 mosquitto_pub -h 192.168.0.80 -t "commands/home/hall/roof/output" -m "on"
 ```
+
+## Misc ##
+
+#### Auto import new nodes to ssh ####
+By using nodes with the mqtt-node program you have a self-discovery database of all the nodes names and IP-addresses.
+
+Using a simple script we can retrieve this information and add in the ssh config. Next time you want to ssh into your raspberry you dont have to worry about what IP it has, just type ``ssh <node_name>``, eg. using the standard config.ini file ``ssh hall``.
+
+Make the script run every now and then using crontab or manually run it when something has changed. The script finds the ip for all nodes on the topic ``home/<node_name>/info/ip``.
+
+```bash
+#!/bin/bash
+
+# Node discovery script
+# Dependencies: Please first install mosquitto_sub
+
+# Author Daniel Falk
+# https://github.com/daniel-falk/python-mqtt-node-rpi
+
+# This is the address to the MQTT broker
+SERVER=192.168.0.80
+
+IDENTIFIER="# EVERYTHING AFTER THIS COMMENT IS VOLATILE AND MIGHT GET REMOVED!"
+
+# Read all names and IPs from MQTT
+UNITS=$(timeout 0.3 mosquitto_sub -h $SERVER -t home/+/info/ip -v)
+
+# Convert to arrays
+OLDIFS=$IFS
+IFS=$'\n'
+units=($UNITS)
+IFS=$OLDIFS
+
+# Remove output from last time and add new
+sed -ni "/$IDENTIFIER/q;p" ~/.ssh/config
+echo "$IDENTIFIER" >> ~/.ssh/config
+echo "# ALSO, DON'T CHANGE THE COMMENT ABOVE OR YOU WILL BREAK THE SCRIPT" >> ~/.ssh/config
+
+# Loop through
+for (( i=0; i<${#units[@]}; i++ )); do
+    NAME=$(echo ${units[$i]} | sed 's/^[^/]\+\/\([^/]\+\)\/.*/\1/')
+    IP=$(echo ${units[$i]} | awk '{ print $2 }')
+
+    # Add to ssh-config
+    echo "Host $NAME
+    HostName $IP
+    User pi" >> ~/.ssh/config
+done
+```
