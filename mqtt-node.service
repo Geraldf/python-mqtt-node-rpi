@@ -1,0 +1,14 @@
+[Unit]
+Description=MQTT controlled IO client
+After=network.target
+
+[Service]
+User=pi
+Type=simple
+WorkingDirectory=/home/pi/python-mqtt-node-rpi/
+ExecStart=/usr/bin/python -mmqtt_node
+StandardError=journal
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

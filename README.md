@@ -16,13 +16,25 @@ pip install paho-mqtt
 ```
 
 ## Configure ##
-Make sure this module is started on startup. Since we only communicate with the pigpio daemon we don't need root access.
-Run startup script during boot using ``crontab -e``
-``@reboot /path/to/dir/start.sh``
+Make sure this module is started on startup. We use a unit-file to tell systemd to start the application on boot (and make sure that it always is running, respawning it if necessary)
+
+```bash
+# If not located in pi homedir, then you must change the path in the mqtt-node.service file!
+sudo cp ~/python-mqtt-node-rpi/mqtt-node.service /etc/systemd/system
+
+sudo systemctl daemon-reload
+sudo systemctl start mqtt-node.service
+sudo systemctl enable mqtt-node.service
+```
 
 Modify the config.ini file to fit your needs
 
 ## Test ##
+
+Show the log using the systemd journal:
+```bash
+sudo journalctl -u mqtt-node -f
+```
 
 Turn on io by publishing message ``<STATE>`` to topic ``commands/home/<MODULE-NAME>/<TARGET>/output``
 
