@@ -17,12 +17,12 @@ def on_msg(client, data, msg):
 
     status = data.callback(target, state)
 
-    if all(value == True for value in status.values()):
-        ans = dict(status="ok", value=state)
+    if all(value == True for key, value in status.iteritems() if key != 'last_state'):
+        ans = dict(status="ok", value=status['last_state'])
     else:
         d_err = []
         for key, value in status.iteritems():
-            if isinstance(value, str):
+            if isinstance(value, str) and key != 'last_state':
                 d_err.append("Snap. Exception from '{}': {}".format(key, value))
 
         if status["target"] == False:
@@ -36,7 +36,8 @@ def on_msg(client, data, msg):
                 status="error",
                 error=d_err,
                 target=target,
-                t_value=state)
+                t_value=state,
+                value=str(status['last_state']))
 
         log("Update failed: {}".format(ans))
 
@@ -46,7 +47,7 @@ def on_msg(client, data, msg):
             'home/{node}/{target}/output'.format(node=data.node_name, target=target),
             payload=json.dumps(ans),
             qos=1,
-            retain=False)
+            retain=True)
 
     set_info(client, data.node_name, data.info)
 
