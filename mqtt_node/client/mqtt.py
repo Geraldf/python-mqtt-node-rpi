@@ -6,6 +6,7 @@ import sys
 from .. import log
 from utils import get_mac, get_ip
 import json
+from collections import namedtuple
 
 
 '''
@@ -17,19 +18,20 @@ def on_msg(client, data, msg):
 
     status = data.callback(target, state)
 
-    if all(value == True for key, value in status.iteritems() if key != 'last_state'):
-        ans = dict(status="ok", value=status['last_state'])
+    # Check if command was successfull and build an mqtt answer
+    if status.action_success:
+        ans = dict(status="ok", value=status.current_state)
     else:
         d_err = []
-        for key, value in status.iteritems():
-            if isinstance(value, str) and key != 'last_state':
+        for key, value in status._asdict().iteritems():
+            if isinstance(value, str) and key != 'current_state':
                 d_err.append("Snap. Exception from '{}': {}".format(key, value))
 
-        if status["target"] == False:
+        if status.target_exists == False:
             d_err.append("Target is invalid")
-        if status["state"] == False:
+        if status.state_exists == False:
             d_err.append("Value is invalid")
-        if status["action"] == False:
+        if status.action_success == False:
             d_err.append("Snap. Failed to set value for target")
 
         ans = dict(
@@ -37,7 +39,7 @@ def on_msg(client, data, msg):
                 error=d_err,
                 target=target,
                 t_value=state,
-                value=str(status['last_state']))
+                value=str(status.current_state))
 
         log("Update failed: {}".format(ans))
 
@@ -94,6 +96,16 @@ def on_disconnect(client, data, rc):
 
 
 class Mqtt:
+    CallbackAnswer = namedtuple('CallbackAnswer',
+            ['target_exists', 'state_exists', 'action_success', 'current_state'])
+
+    '''
+    Constructor for the MQTT connection object
+
+    config: Server and client info
+    action_callback: Callback function on mqtt message taking target and
+                     state as arguments and returning an Mqtt.CallbackAnswer object
+    '''
     def __init__(self, config, action_callback):
         self.id = get_mac()
         self.connected = False

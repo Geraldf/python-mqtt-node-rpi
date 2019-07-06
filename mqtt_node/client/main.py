@@ -26,14 +26,14 @@ else:
 Proxy the action to correct unit (as of now only io-control unit exists)
 '''
 def proxy_action(target, state):
-    ans = dict(
-            target=target in ios,
-            state=None,
-            action=None)
+    target_exists = target in ios
+    state_exists = None
+    action_success = None
+    current_state = None
 
     try:
         # If target name is specified in config file...
-        if ans["target"]:
+        if target_exists:
             target_conf = dict(conf.items(target))
 
             if "pin" in target_conf.keys():
@@ -42,53 +42,53 @@ def proxy_action(target, state):
             if target_type == "pin":
                 # Get target io-pin number
                 try:
-                    pin = int(target_conf[target_type])
+                    pin_number = int(target_conf[target_type])
                 except KeyError as e:
-                    ans["target"] = str(e)
+                    target_exists = str(e)
 
                 # Get the value of the requested state
                 try:
                     value = int(target_conf[state])
-                    ans["state"] = True
+                    state_exists = True
                 except KeyError as e:
-                    ans["state"] = str(e)
+                    state_exists = str(e)
 
                 # Set the io's value
-                if ans["state"] == True:
+                if state_exists == True:
                     try:
-                        if set_io(pin, value):
-                            ans["action"] = True
+                        if set_io(pin_number, value):
+                            action_success = True
                         else:
-                            ans["action"] = False
+                            action_success = False
                     except Exception as e:
                         # Forward exception to MQTT
-                        ans["action"] = str(e)
+                        action_success = str(e)
 
                 # Read the current state of the io
-                if (pin):
-                    try:
-                        last_state = str(get_io(pin))
-                        ans["last_state"] = [k for k, v in target_conf.iteritems() if k!=target_type and v==last_state][0]
-                    except IndexError:
-                        ans["last_state"] = last_state
-                    except Exception as e:
-                        ans["last_state"] = str(e)
-                else:
-                    ans["last_state"] = ""
+                try:
+                    io_state = str(get_io(pin_number))
+                    # Perform a reverse lookup of the state name from the config
+                    current_state = [k for k, v in target_conf.iteritems() if k!=target_type and v==io_state][0]
+                except IndexError:
+                    # Failed to find mapping - return the raw io value
+                    current_state = io_state
+                except NameError:
+                    current_state = ""
+                except Exception as e:
+                    current_state = str(e)
             else:
-                err_str = "Unknown target type: {}".format(target)
-                ans["target"] = err_str
+                err_str = "Type of target is unknown: {}".format(target)
+                target_exists = err_str
                 log(err_str)
 
     # Catch all other exceptions to make sure that one thread doesn't get stuck...
     except Exception as e:
-        ans["target"] = str(e)
+        target_exists = str(e)
 
-    return ans
+    return Mqtt.CallbackAnswer(target_exists, state_exists, action_success, current_state)
 
 
 def run_client():
-
     c = dict(conf.items("MQTT"))
     c.update(dict(conf.items("UNIT")))
     mqtt = Mqtt(c, proxy_action)
