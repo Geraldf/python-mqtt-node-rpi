@@ -3,9 +3,9 @@ Description=MQTT controlled IO client
 After=network.target
 
 [Service]
-User=pi
+User=Gerald
 Type=simple
-WorkingDirectory=/home/pi/python-mqtt-node-rpi/
+WorkingDirectory=/home/Gerald/python-mqtt-node-rpi/
 ExecStart=/usr/bin/python -mmqtt_node
 StandardError=journal
 Restart=always
