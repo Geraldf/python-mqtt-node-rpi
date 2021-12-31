@@ -325,12 +325,12 @@ def init_gpio():
 
 def read_pin(pin):
     state = -1
-    if PFIO_MODULE:
-        # state = PFIO.digital_read(pin)
+    ''' if PFIO_MODULE:
+        state = PFIO.digital_read(pin)
 
     if GPIO_MODULE:
-        # state = GPIO.input(pin)
-
+        state = GPIO.input(pin)
+ '''
     if MONITOR_OUT_INVERT:
         if state == 0:
             state = 1
