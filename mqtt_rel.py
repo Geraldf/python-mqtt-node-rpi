@@ -64,6 +64,7 @@ MONITOR_REFRESH = config.get("global", "monitor_refresh")
 # Initialise logging
 LOGFORMAT = '%(asctime)-15s %(levelname)-5s %(message)s'
 
+logging.basicConfig(level=logging.DEBUG, format=LOGFORMAT)
 # if DEBUG:
 #     logging.basicConfig(filename=LOGFILE,
 #                         level=logging.DEBUG,
