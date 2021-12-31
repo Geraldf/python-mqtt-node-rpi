@@ -318,12 +318,13 @@ def init_gpio():
         pin = PINS[index][0]
 
         logging.debug("Initialising GPIO input pin %d..." % (pin))
-        if MONITOR_PINS_PUD == "UP":
-            GPIO.setup(pin, GPIO.OUT, pull_up_down=GPIO.PUD_UP)
-        elif MONITOR_PINS_PUD == "DOWN":
-            GPIO.setup(pin, GPIO.OUT, pull_up_down=GPIO.PUD_DOWN)
-        else:
-            GPIO.setup(pin, GPIO.OUT)
+        GPIO.setup(pin, GPIO.OUT)
+        # if MONITOR_PINS_PUD == "UP":
+        #     GPIO.setup(pin, GPIO.OUT, pull_up_down=GPIO.PUD_UP)
+        # elif MONITOR_PINS_PUD == "DOWN":
+        #     GPIO.setup(pin, GPIO.OUT, pull_up_down=GPIO.PUD_DOWN)
+        # else:
+        #     GPIO.setup(pin, GPIO.OUT)
 
 
 def read_pin(pin):
