@@ -199,21 +199,21 @@ def on_message(mosq, obj, msg):
     value = int(msg.payload)
     logging.debug("Incoming message for pin %d -> %d" % (pin, value))
 
-    # if PFIO_MODULE:
-    #     if value == 1:
-    #         PFIO.digital_write(pin, 1)
-    #     else:
-    #         PFIO.digital_write(pin, 0)
+    if PFIO_MODULE:
+        if value == 1:
+            PFIO.digital_write(pin, 1)
+        else:
+            PFIO.digital_write(pin, 0)
 
-    # if GPIO_MODULE:
-    #     if pin not in GPIO_OUTPUT_PINS:
-    #         GPIO.setup(pin, GPIO.OUT, initial=GPIO.HIGH)
-    #         GPIO_OUTPUT_PINS.append(pin)
+    if GPIO_MODULE:
+        if pin not in GPIO_OUTPUT_PINS:
+            GPIO.setup(pin, GPIO.OUT, initial=GPIO.HIGH)
+            GPIO_OUTPUT_PINS.append(pin)
 
-    #     if value == 1:
-    #         GPIO.output(pin, GPIO.LOW)
-    #     else:
-    #         GPIO.output(pin, GPIO.HIGH)
+        if value == 1:
+            GPIO.output(pin, GPIO.LOW)
+        else:
+            GPIO.output(pin, GPIO.HIGH)
 
 # End of MQTT callbacks
 
@@ -226,13 +226,13 @@ def cleanup(signum, frame):
     # Cleanup our interface modules
     if PFIO_MODULE:
         logging.debug("Clean up PiFace.PFIO module")
-        # PFIO.deinit()
+        PFIO.deinit()
 
     if GPIO_MODULE:
         logging.debug("Clean up RPi.GPIO module")
         for pin in GPIO_OUTPUT_PINS:
             GPIO.output(pin, GPIO.HIGH)
-        # GPIO.cleanup()
+        GPIO.cleanup()
 
     # Publish our LWT and cleanup the MQTT connection
     logging.info("Disconnecting from broker...")
@@ -297,7 +297,7 @@ def init_pfio():
     """
     Initialise the PFIO library
     """
-    # PFIO.init()
+    PFIO.init()
 
 
 def init_gpio():
@@ -307,32 +307,32 @@ def init_gpio():
     GPIO.setwarnings(False)
     if MONITOR_PIN_NUMBERING == "BCM":
         logging.debug("Initialising GPIO using BCM numbering")
-        # GPIO.setmode(GPIO.BCM)
+        GPIO.setmode(GPIO.BCM)
     else:
         logging.debug("Initialising GPIO using Board numbering")
-        # GPIO.setmode(GPIO.BOARD)
+        GPIO.setmode(GPIO.BOARD)
 
     for PIN in PINS:
         index = [y[0] for y in PINS].index(PIN[0])
         pin = PINS[index][0]
 
         logging.debug("Initialising GPIO input pin %d..." % (pin))
-        ''' if MONITOR_PINS_PUD == "UP":
+        if MONITOR_PINS_PUD == "UP":
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         elif MONITOR_PINS_PUD == "DOWN":
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         else:
-            GPIO.setup(pin, GPIO.IN) '''
+            GPIO.setup(pin, GPIO.IN)
 
 
 def read_pin(pin):
     state = -1
-    ''' if PFIO_MODULE:
+    if PFIO_MODULE:
         state = PFIO.digital_read(pin)
 
     if GPIO_MODULE:
         state = GPIO.input(pin)
- '''
+
     if MONITOR_OUT_INVERT:
         if state == 0:
             state = 1
