@@ -195,6 +195,7 @@ def on_message(mosq, obj, msg):
 
     topicparts = msg.topic.split("/")
     pin = int(topicparts[len(topicparts) - 1])
+    logging.debug("Incoming message for pin %d -> %s" % (pin, msg.payload))
     value = int(msg.payload)
     logging.debug("Incoming message for pin %d -> %d" % (pin, value))
 
