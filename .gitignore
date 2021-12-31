@@ -1,1 +1,6 @@
 *.pyc
+bin
+lib
+mqtt_rel.log
+mqtt_rel.ini
+pyvenv.cfg
