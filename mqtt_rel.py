@@ -207,8 +207,9 @@ def on_message(mosq, obj, msg):
 
     if GPIO_MODULE:
         if pin not in GPIO_OUTPUT_PINS:
-            GPIO.setup(pin, GPIO.OUT, initial=GPIO.HIGH)
-            GPIO_OUTPUT_PINS.append(pin)
+            pass
+            # GPIO.setup(pin, GPIO.OUT, initial=GPIO.HIGH)
+            # GPIO_OUTPUT_PINS.append(pin)
 
         if value == 1:
             GPIO.output(pin, GPIO.LOW)
