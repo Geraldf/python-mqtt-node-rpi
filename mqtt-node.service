@@ -6,7 +6,7 @@ After=network.target
 User=Gerald
 Type=simple
 WorkingDirectory=/home/Gerald/python-mqtt-node-rpi/
-ExecStart=/usr/bin/python -mmqtt_node
+ExecStart=python3 mqtt_rel.py
 StandardError=journal
 Restart=always
 
